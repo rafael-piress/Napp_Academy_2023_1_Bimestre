@@ -1,6 +1,7 @@
 from libs.storage.DB import DBStructure
 from libs.app.model.client import Client
 from colorama import init, Style, Fore
+import pandas as pd
 
 
 class ModelingSchedule:
@@ -17,7 +18,7 @@ class ModelingSchedule:
 		self.occurrences_client = list()
 		self.final_schedule = dict()
 		self.marked = dict()
-		self.appointment_post = list()
+		self.appointment = list()
 
 	def extract_db_entitys(self):
 		if len(self.schedule_day) == 0:
@@ -33,7 +34,7 @@ class ModelingSchedule:
 			self.db.db_read('sports_value_control', self.filters)
 			self.court = [result[2:] for result in self.db.results]
 		self.db.db_read('sports_key_value_occurrences')
-		self.occurrences_client = [result[3:] for result in self.db.results]
+		self.occurrences_client = [result[2:] for result in self.db.results]
 		self.occurrences = [result[3:-1] for result in self.db.results]
 
 	def extract_final_schedule(self):
@@ -136,19 +137,32 @@ class ModelingSchedule:
 		if self.court and self.schedule_day and self.schedule_time:
 			for key in self.court + self.schedule_day + self.schedule_time:
 				if str(key[2]) == str(element):
-					self.appointment_post.append(key)
+					self.appointment.append(key)
 					return
 		else:
 			raise ValueError('The schedule was not uploaded!')
 
+	def __extract_occurrence_sport_id(self) -> int:
+		if self.appointment:
+			control = list()
+			final_occurrence = list()
+			final_occurrence.append([element[0] for element in self.appointment])
+			for occurrence in self.occurrences_client:
+				for element_ in final_occurrence[0]:
+					if element_ in occurrence:
+						control.append(True)
+				if len(control) == 4:
+					return occurrence[0]
+				else:
+					control = list()
+
 	def post_appointment(self):
-		if self.marked and self.appointment_post:
+		if self.marked and self.appointment:
 			for element in self.marked.keys():
 				self.__extract_object_key(self.marked[element])
-		if len(self.appointment_post) == 4:
+		if len(self.appointment) == 4:
 			sended_post = dict()
-			print(self.appointment_post)
-			for element in self.appointment_post:
+			for element in self.appointment:
 				try:
 					if element[1] == 1:
 						sended_post['weekday_id'] = element[0]
@@ -163,3 +177,38 @@ class ModelingSchedule:
 				
 		else:
 			raise ValueError('The client schedule was not uploaded!')
+
+
+	def delete_appointment(self):
+		if self.marked and self.appointment:
+			for element in self.marked.keys():
+				self.__extract_object_key(self.marked[element])
+		if len(self.appointment) == 4:
+			sended_post = dict()
+			delete_id = self.__extract_occurrence_sport_id()
+			if delete_id:
+				self.db.db_delete('sports_key_value_occurrences', {'key': 'occurrences_id', 'key_value': delete_id})
+		else:
+			raise ValueError('The client schedule was not uploaded!')
+
+	def output_appointments_csv(self):
+		output_elements = dict()
+		if len(self.final_schedule.keys()) == 0:
+			raise ValueError('The schedule was not uploaded!')
+		output_elements.update(self.final_schedule)
+		for court in output_elements.keys():
+			for day in output_elements[court].keys():
+				if type(output_elements[court][day]) is bool:
+					if output_elements[court][day]:
+						output_elements[court][day] = ''
+					else:
+						output_elements[court][day] = 'X'
+				else:
+					for schedule in output_elements[court][day].keys():
+						if output_elements[court][day][schedule]:
+							output_elements[court][day][schedule] = ''
+						else:
+							output_elements[court][day][schedule] = 'X'
+		for court in output_elements.keys():
+			frame_information = pd.DataFrame(output_elements[court])
+			frame_information.to_csv(f'schedule_court_{court}.csv')

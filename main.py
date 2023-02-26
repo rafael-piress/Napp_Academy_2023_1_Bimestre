@@ -1,6 +1,4 @@
-from libs.app.schedule_config import ModelingSchedule
-from libs.app.client_config import Modeling_Client
-from colorama import Fore, Back, Style
+from libs.context.context import Context
 
 '''
 	It's possible to rent in blocks of
@@ -12,35 +10,26 @@ from colorama import Fore, Back, Style
 
 def main() -> None:
 	print(10 * " - ", " Attenuare's courts ", 10 * " - ")
-	while True:
-		try:
-			desicion = int(input('\n\t[1] - See schedule\nChoose: '))
-		except (TypeError, ValueError):
-			print('Wrong caracter, try again!')
-			continue
-		if desicion not in range(1, 2):
-			print('Wrong choice, try again!')
-			continue
-		else:
-			break
-	if desicion == 1:
-		config = ModelingSchedule()
-		config.extract_db_entitys()
-		config.extract_final_schedule()
-		print(10 * " - ", f" All Courts ", 10 * " - ", '\n')
-		config.marked["court"] = config.see_schedule('court')
-		print(10 * " - ", f" All Days ", 10 * " - ", '\n')
-		print(Fore.YELLOW + f' => Court: {config.marked["court"]}')
-		print(Style.RESET_ALL)
-		config.marked["day"] = config.see_schedule(element='day', court=config.marked["court"])
-		print(10 * " - ", f" All Times ", 10 * " - ", '\n')
-		print(Fore.YELLOW + f' => Court: {config.marked["court"]} | Day: {config.marked["day"]}')
-		print(Style.RESET_ALL)
-		config.marked["time"] = config.see_schedule(element='time', court=config.marked["court"], day=config.marked["day"])
-		if config.check_court_viability(config.marked):
-			config.appointment_post.append((1,))
-			config.post_appointment()
-			print(Fore.YELLOW + f' => Court: {config.marked["court"]} | Day: {config.marked["day"]} | Time: {config.marked["time"]} - Reserved!')
+	desicion = 0
+	while desicion != 10:
+		while True:
+			try:
+				desicion = int(input('\n\t[1] - Make a Appointment\n\t[2] - Cancel a Appointment\n\t[9] - Extract schedule to csv\n\t[10] - Exit\nChoose: '))
+			except (TypeError, ValueError):
+				print('Wrong caracter, try again!')
+				continue
+			if desicion not in range(1, 11):
+				print('Wrong choice, try again!')
+				continue
+			else:
+				break
+		context = Context()
+		if desicion == 1:
+			context.make_appointment()
+		if desicion == 2:
+			context.cancel_appointment()
+		if desicion == 9:
+			context.output_schedule_csv()
 
 
 if __name__ == '__main__':

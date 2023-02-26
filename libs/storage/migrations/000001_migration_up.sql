@@ -76,6 +76,8 @@ INSERT INTO sports_value_control(sports_key_control_id, description) VALUES
 	(3, '3'),
 	(3, '4');
 
+INSERT INTO client(name, phone_number) VALUES 
+('Your Name', '1960607070')
 
 INSERT INTO sports_key_value_occurrences(court_id, weekday_id, schedule_id, client_id) VALUES 
 (19, 1, 8, 1)
