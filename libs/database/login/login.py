@@ -1,5 +1,0 @@
-database = 'attenuares_beach'
-hostname = '127.1.1.0'
-username = 'postgres'
-password = 'Zv15936jp!'
-port = '5432'
