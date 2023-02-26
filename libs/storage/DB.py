@@ -1,5 +1,5 @@
 import psycopg2
-from libs.database.login.login import (
+from libs.storage.login.login import (
     hostname,
     username,
     password,
@@ -76,4 +76,4 @@ client = {
 
 
 
-# Documentation: https://www.tutorialspoint.com/python_data_access/python_postgresql_select_data.htm
+# Documentation: https://www.tutorialspoint.com/python_data_access/python_postgresql_select_data.html

@@ -1,4 +1,4 @@
-from libs.app.schedule_config import Modeling_Schedule
+from libs.app.schedule_config import ModelingSchedule
 from libs.app.client_config import Modeling_Client
 from colorama import Fore, Back, Style
 
@@ -24,19 +24,23 @@ def main() -> None:
 		else:
 			break
 	if desicion == 1:
-		config = Modeling_Schedule()
+		config = ModelingSchedule()
 		config.extract_db_entitys()
 		config.extract_final_schedule()
 		print(10 * " - ", f" All Courts ", 10 * " - ", '\n')
-		court = config.see_schedule('court')
+		config.marked["court"] = config.see_schedule('court')
 		print(10 * " - ", f" All Days ", 10 * " - ", '\n')
-		print(Fore.YELLOW + f' => Court: {court}')
+		print(Fore.YELLOW + f' => Court: {config.marked["court"]}')
 		print(Style.RESET_ALL)
-		day = config.see_schedule(element='day', court=court)
+		config.marked["day"] = config.see_schedule(element='day', court=config.marked["court"])
 		print(10 * " - ", f" All Times ", 10 * " - ", '\n')
-		print(Fore.YELLOW + f' => Court: {court} | Day: {day}')
+		print(Fore.YELLOW + f' => Court: {config.marked["court"]} | Day: {config.marked["day"]}')
 		print(Style.RESET_ALL)
-		time = config.see_schedule(element='time', court=court, day=day)
+		config.marked["time"] = config.see_schedule(element='time', court=config.marked["court"], day=config.marked["day"])
+		if config.check_court_viability(config.marked):
+			config.appointment_post.append((1,))
+			config.post_appointment()
+			print(Fore.YELLOW + f' => Court: {config.marked["court"]} | Day: {config.marked["day"]} | Time: {config.marked["time"]} - Reserved!')
 
 
 if __name__ == '__main__':

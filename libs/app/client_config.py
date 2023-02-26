@@ -1,4 +1,4 @@
-from libs.database.DB import DBStructure
+from libs.storage.DB import DBStructure
 from libs.app.model.client import Client
 from colorama import init, Style, Fore
 

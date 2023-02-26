@@ -31,11 +31,11 @@ CREATE TABLE sports_key_value_occurrences (
 	occurrences_id SERIAL PRIMARY KEY,
 	court_id SERIAL,
 	weekday_id SERIAL,
-	time_id SERIAL,
+	schedule_id SERIAL,
 	client_id SERIAL,
 	FOREIGN KEY (weekday_id) 
 	REFERENCES sports_value_control(sports_value_control_id),
-	FOREIGN KEY (time_id) 
+	FOREIGN KEY (schedule_id) 
 	REFERENCES sports_value_control(sports_value_control_id),
 	FOREIGN KEY (client_id) 
 	REFERENCES client(client_id)
@@ -77,8 +77,8 @@ INSERT INTO sports_value_control(sports_key_control_id, description) VALUES
 	(3, '4');
 
 
-INSERT INTO sports_key_value_occurrences(court_id, weekday_id, time_id, client_id) VALUES 
+INSERT INTO sports_key_value_occurrences(court_id, weekday_id, schedule_id, client_id) VALUES 
 (19, 1, 8, 1)
 
-INSERT INTO sports_key_value_occurrences(court_id, weekday_id, time_id, client_id) VALUES 
+INSERT INTO sports_key_value_occurrences(court_id, weekday_id, schedule_id, client_id) VALUES 
 (21, 2, 9, 1)
