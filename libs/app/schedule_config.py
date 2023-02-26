@@ -1,9 +1,9 @@
-from libs.database.DB import DBStructure
+from libs.storage.DB import DBStructure
 from libs.app.model.client import Client
 from colorama import init, Style, Fore
 
 
-class Modeling_Schedule:
+class ModelingSchedule:
 	"""
 		Class that verify the schedule viability
 		and return this information
@@ -16,6 +16,8 @@ class Modeling_Schedule:
 		self.court = list()
 		self.occurrences_client = list()
 		self.final_schedule = dict()
+		self.marked = dict()
+		self.appointment_post = list()
 
 	def extract_db_entitys(self):
 		if len(self.schedule_day) == 0:
@@ -71,18 +73,16 @@ class Modeling_Schedule:
 			if len(self.occurrences_client) > 0:
 				self.extract_final_schedule()
 
-	def check_court_viability(self, court: str, day: str or None = None, time: str or None = None):
+	def check_court_viability(self, marked: dict):
 		try:
-			control = self.final_schedule[court]
+			control = self.final_schedule[marked['court']]
 		except KeyError:
 			self.extract_final_schedule()
 			self.check_court_viability(court)
-		if day and time:
-			return self.final_schedule[court][day][time]
-		elif day:
-			return self.final_schedule[court][day]
-		else:
-			return self.final_schedule[court] 
+		try:
+			return self.final_schedule[marked['court']][marked['day']][marked['time']]
+		except KeyError:
+			raise ValueError('The schedule was not uploaded!')
 
 	def see_schedule(self, element: str, court: str or None = None, day: str or None = None, time: str or None = None):
 		if len(self.final_schedule) > 0:
@@ -95,6 +95,7 @@ class Modeling_Schedule:
 				if day:
 					loop_element = self.final_schedule[court][day]
 			dict_control = dict()
+			range_final = len(loop_element.keys()) + 1
 			while True:
 				init()
 				for count, db_entity in enumerate(loop_element.keys()):
@@ -125,8 +126,40 @@ class Modeling_Schedule:
 				except TypeError:
 					print('Wrong caracter, try again!')
 					continue
-				if decicion in range(1, 5):
+				if decicion in range(1, range_final):
 					break
 			return dict_control[decicion - 1]
 		else:
 			raise ValueError('The schedule was not created!')
+
+	def __extract_object_key(self, element: str) -> tuple:
+		if self.court and self.schedule_day and self.schedule_time:
+			for key in self.court + self.schedule_day + self.schedule_time:
+				if str(key[2]) == str(element):
+					self.appointment_post.append(key)
+					return
+		else:
+			raise ValueError('The schedule was not uploaded!')
+
+	def post_appointment(self):
+		if self.marked and self.appointment_post:
+			for element in self.marked.keys():
+				self.__extract_object_key(self.marked[element])
+		if len(self.appointment_post) == 4:
+			sended_post = dict()
+			print(self.appointment_post)
+			for element in self.appointment_post:
+				try:
+					if element[1] == 1:
+						sended_post['weekday_id'] = element[0]
+					elif element[1] == 2:
+						sended_post['schedule_id'] = element[0]
+					elif element[1] == 3:
+						sended_post['court_id'] = element[0]
+				except IndexError:
+					sended_post['client_id'] = element[0]
+			if len(sended_post.keys()) == 4:
+				self.db.db_create('sports_key_value_occurrences', sended_post)
+				
+		else:
+			raise ValueError('The client schedule was not uploaded!')
