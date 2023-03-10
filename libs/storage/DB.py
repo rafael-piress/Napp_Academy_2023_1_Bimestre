@@ -52,21 +52,22 @@ class DBStructure:
             self.results = session.fetchall();
 
 
-    def db_update(self, occurrence: dict or None = None):
+    def db_update(self, table_name: str, occurrence: dict or None = None):
         self.__db_conect()
         clause = f'UPDATE {table_name} SET {occurrence.get("update", "-")} = {occurrence.get("value", "-")}'
         clause += f' WHERE {occurrence.get("key", "-")} = {occurrence.get("key_value", "-")}'
         with self.cursor as session:
             session.execute(clause)
-            self.results = session.fetchall();
+            self.connector.commit()
 
-    def db_delete(self, occurrence: dict or None = None):
+    def db_delete(self, table_name: str, occurrence: dict or None = None):
         self.__db_conect()
         clause = f'DELETE FROM {table_name}'
         clause += f' WHERE {occurrence.get("key", "-")} = {occurrence.get("key_value", "-")}'
+        clause += f' RETURNING {occurrence.get("key", "-")}'
         with self.cursor as session:
             session.execute(clause)
-            self.results = session.fetchall();
+            self.connector.commit()
 
 
 client = {
