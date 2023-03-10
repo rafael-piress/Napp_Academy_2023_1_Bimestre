@@ -58,7 +58,7 @@ class DBStructure:
         clause += f' WHERE {occurrence.get("key", "-")} = {occurrence.get("key_value", "-")}'
         with self.cursor as session:
             session.execute(clause)
-            self.results = session.fetchall();
+            self.connector.commit()
 
     def db_delete(self, table_name: str, occurrence: dict or None = None):
         self.__db_conect()

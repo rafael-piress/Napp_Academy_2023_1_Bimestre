@@ -3,7 +3,7 @@ CREATE TABLE client (
  	updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	client_id SERIAL PRIMARY KEY,
 	name VARCHAR(100) NOT NULL,
-	phone_number VARCHAR(12)
+	phone_number VARCHAR(12),
 );
 
 CREATE TABLE sports_key_control (
@@ -37,6 +37,15 @@ CREATE TABLE sports_key_value_occurrences (
 	REFERENCES sports_value_control(sports_value_control_id),
 	FOREIGN KEY (schedule_id) 
 	REFERENCES sports_value_control(sports_value_control_id),
+	FOREIGN KEY (client_id) 
+	REFERENCES client(client_id)
+);
+
+CREATE TABLE client_values (
+  	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ 	updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	client_id SERIAL,
+	value DECIMAL,
 	FOREIGN KEY (client_id) 
 	REFERENCES client(client_id)
 );

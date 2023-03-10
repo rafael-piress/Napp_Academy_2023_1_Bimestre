@@ -1,6 +1,6 @@
 from libs.storage.DB import DBStructure
 from libs.app.model.client import Client
-from colorama import init, Style, Fore
+from colorama import Style, Fore
 import pandas as pd
 
 
@@ -19,6 +19,8 @@ class ModelingSchedule:
 		self.final_schedule = dict()
 		self.marked = dict()
 		self.appointment = list()
+		self.all_times = list()
+		self.specific_client_occurrences = list()
 
 	def extract_db_entitys(self):
 		if len(self.schedule_day) == 0:
@@ -81,11 +83,23 @@ class ModelingSchedule:
 			self.extract_final_schedule()
 			self.check_court_viability(court)
 		try:
-			return self.final_schedule[marked['court']][marked['day']][marked['time']]
+			if len(marked['time']) == 3:
+				not_availiable = list()
+				for time in marked['time']:
+					if self.final_schedule[marked['court']][marked['day']][time]:
+						continue
+					else:
+						not_availiable.append(time)
+				if len(not_availiable) > 0:
+					return not_availiable
+				else:
+					return True
+			else:
+				return self.final_schedule[marked['court']][marked['day']][marked['time']]
 		except KeyError:
 			raise ValueError('The schedule was not uploaded!')
 
-	def see_schedule(self, element: str, court: str or None = None, day: str or None = None, time: str or None = None):
+	def see_schedule(self, element: str, court: str or None = None, day: str or None = None, time: str or None = None, multiple: bool = False):
 		if len(self.final_schedule) > 0:
 			if element == 'court':
 				loop_element = self.final_schedule
@@ -98,7 +112,6 @@ class ModelingSchedule:
 			dict_control = dict()
 			range_final = len(loop_element.keys()) + 1
 			while True:
-				init()
 				for count, db_entity in enumerate(loop_element.keys()):
 					space = (10 - len(db_entity)) * ' '
 					if db_entity == 'availiable':
@@ -123,20 +136,35 @@ class ModelingSchedule:
 							print(Style.RESET_ALL)
 					dict_control[count] = db_entity
 				try:
-					decicion = int(input(f'{element.capitalize()}: '))
+					if multiple and element.lower() == 'time':
+						decicion = str(input(f'{element.capitalize()}: '))
+					else:
+						decicion = int(input(f'{element.capitalize()}: '))
 				except TypeError:
 					print('Wrong caracter, try again!')
 					continue
 				if decicion in range(1, range_final):
 					break
-			return dict_control[decicion - 1]
+				elif multiple and element.lower() == 'time':
+					ids = list()
+					if decicion.strip().count(' ') == 2:
+						ids = decicion.split(' ')
+					elif decicion.strip().count(',') == 2:
+						ids = decicion.split(',')
+					if len(ids) == 3:
+						return [dict_control[int(id_) -1] for id_ in ids]
+					else:
+						print("There's most be three different hours!\n")
+			return dict_control.get(decicion - 1, '-')
 		else:
 			raise ValueError('The schedule was not created!')
 
-	def __extract_object_key(self, element: str) -> tuple:
+	def __extract_object_key(self, element: str, time: bool = False) -> tuple:
 		if self.court and self.schedule_day and self.schedule_time:
 			for key in self.court + self.schedule_day + self.schedule_time:
 				if str(key[2]) == str(element):
+					if time:
+						return key
 					self.appointment.append(key)
 					return
 		else:
@@ -156,10 +184,15 @@ class ModelingSchedule:
 				else:
 					control = list()
 
-	def post_appointment(self):
+	def post_appointment(self) -> None:
 		if self.marked and self.appointment:
 			for element in self.marked.keys():
+				if element.lower() == 'time' and type(self.marked[element]) == list:
+					for occurrence in self.marked[element]:
+						print(occurrence)
+						self.all_times.append(self.__extract_object_key(occurrence, True))
 				self.__extract_object_key(self.marked[element])
+		sended_post = dict()
 		if len(self.appointment) == 4:
 			sended_post = dict()
 			for element in self.appointment:
@@ -174,12 +207,44 @@ class ModelingSchedule:
 					sended_post['client_id'] = element[0]
 			if len(sended_post.keys()) == 4:
 				self.db.db_create('sports_key_value_occurrences', sended_post)
+			self.filters = dict()
+			self.filters['client_id'] = sended_post['client_id']
+			self.db.db_read('client_values', self.filters)
+			try:
+				final_value = int(self.db.results[0][-1]) + 100
+				self.db.db_update('client_values', {'update': 'value', 'value': final_value, 'key': 'client_id', 'key_value': sended_post['client_id']})
+			except IndexError:
+				final_value = 100
+				self.db.db_create('client_values', {'client_id': sended_post['client_id'], 'value': final_value})
+		elif len(self.appointment) == 3:
+			if len(self.all_times) == 3:
+				for time in self.all_times:
+					for element in self.appointment:
+						try:
+							if element[1] == 1:
+								sended_post['weekday_id'] = element[0]
+							elif element[1] == 3:
+								sended_post['court_id'] = element[0]
+						except IndexError:
+							sended_post['client_id'] = element[0]
+						sended_post['schedule_id'] = time[0]
+					if len(sended_post.keys()) == 4:
+						self.db.db_create('sports_key_value_occurrences', sended_post)
+				self.filters = dict()
+				self.filters['client_id'] = sended_post['client_id']
+				self.db.db_read('client_values', self.filters)
+				try:
+					final_value = int(self.db.results[0][-1]) + 250
+					self.db.db_update('client_values', {'update': 'value', 'value': final_value, 'key': 'client_id', 'key_value': sended_post['client_id']})
+				except IndexError:
+					final_value = 250
+					self.db.db_create('client_values', {'client_id': sended_post['client_id'], 'value': final_value})
 				
 		else:
 			raise ValueError('The client schedule was not uploaded!')
 
 
-	def delete_appointment(self):
+	def delete_appointment(self) -> None:
 		if self.marked and self.appointment:
 			for element in self.marked.keys():
 				self.__extract_object_key(self.marked[element])
@@ -191,7 +256,7 @@ class ModelingSchedule:
 		else:
 			raise ValueError('The client schedule was not uploaded!')
 
-	def output_appointments_csv(self):
+	def output_appointments_csv(self) -> None:
 		output_elements = dict()
 		if len(self.final_schedule.keys()) == 0:
 			raise ValueError('The schedule was not uploaded!')
@@ -212,3 +277,14 @@ class ModelingSchedule:
 		for court in output_elements.keys():
 			frame_information = pd.DataFrame(output_elements[court])
 			frame_information.to_csv(f'schedule_court_{court}.csv')
+
+	def get_specific_client_schedule(self, client: Client):
+		if len(self.occurrences_client) > 0:
+			for occurrence in self.occurrences_client:
+				if occurrence[-1] == client.id:
+					court = [court[2] for court in self.court if court[0] == occurrence[1]]
+					weekday = [day[2] for day in self.schedule_day if day[0] == occurrence[2]]
+					schedule = [time[2] for time in self.schedule_time if time[0] == occurrence[3]]
+					self.specific_client_occurrences.append([court[0], weekday[0], schedule[0], occurrence[-1]])
+		else:
+			self.extract_db_entitys()

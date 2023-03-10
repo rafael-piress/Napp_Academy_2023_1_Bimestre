@@ -14,7 +14,14 @@ def main() -> None:
 	while desicion != 10:
 		while True:
 			try:
-				desicion = int(input('\n\t[1] - Make a Appointment\n\t[2] - Cancel a Appointment\n\t[9] - Extract schedule to csv\n\t[10] - Exit\nChoose: '))
+				desicion = int(input(
+				'\n\t[1] - Make a Appointment\n\t' +
+				'[2] - Cancel a Appointment\n\t' +
+				'[3] - See specific Client schedule\n\t' +
+				"[4] - See specific Client's Debit\n\t" +
+				'[9] - Extract schedule to csv\n\t' +
+				'[10] - Exit\n' +
+				'Choose: '))
 			except (TypeError, ValueError):
 				print('Wrong caracter, try again!')
 				continue
@@ -28,6 +35,10 @@ def main() -> None:
 			context.make_appointment()
 		if desicion == 2:
 			context.cancel_appointment()
+		if desicion == 3:
+			context.see_client_specific_schedule()
+		if desicion == 4:
+			context.see_client_specific_debit()
 		if desicion == 9:
 			context.output_schedule_csv()
 
