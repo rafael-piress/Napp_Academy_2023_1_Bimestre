@@ -11,7 +11,7 @@ from libs.context.context import Context
 def main() -> None:
 	print(10 * " - ", " Attenuare's courts ", 10 * " - ")
 	desicion = 0
-	while desicion != 10:
+	while desicion != 7:
 		while True:
 			try:
 				desicion = int(input(
@@ -19,13 +19,14 @@ def main() -> None:
 				'[2] - Cancel a Appointment\n\t' +
 				'[3] - See specific Client schedule\n\t' +
 				"[4] - See specific Client's Debit\n\t" +
-				'[9] - Extract schedule to csv\n\t' +
-				'[10] - Exit\n' +
+				"[5] - Make a payment\n\t" +
+				'[6] - Extract schedule to csv\n\t' +
+				'[7] - Exit\n' +
 				'Choose: '))
 			except (TypeError, ValueError):
 				print('Wrong caracter, try again!')
 				continue
-			if desicion not in range(1, 11):
+			if desicion not in range(1, 8):
 				print('Wrong choice, try again!')
 				continue
 			else:
@@ -39,7 +40,9 @@ def main() -> None:
 			context.see_client_specific_schedule()
 		if desicion == 4:
 			context.see_client_specific_debit()
-		if desicion == 9:
+		if desicion == 5:
+			context.make_payment()
+		if desicion == 6:
 			context.output_schedule_csv()
 
 

@@ -75,3 +75,6 @@ client = {
     'name': 'Leandro'
 }
 
+
+
+# Documentation: https://www.tutorialspoint.com/python_data_access/python_postgresql_select_data.html

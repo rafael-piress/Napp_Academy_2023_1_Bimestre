@@ -86,21 +86,11 @@ class Context:
 	def cancel_appointment(self) -> None:
 		self.__print_schedule()
 		if not self.schedule.check_court_viability(self.schedule.marked):
-			self.schedule.appointment.append((self.client.id,))
-			was_deleted = self.schedule.delete_appointment(self.client.id)
+			self.schedule.appointment.append((1,))
+			self.schedule.delete_appointment()
 			self.__see_client()
-			if was_deleted[0]:
-				print(Fore.YELLOW + f' => Court: {self.schedule.marked["court"]} | Day: {self.schedule.marked["day"]} | Time: {self.schedule.marked["time"]} - Canceled!')
-				print(Style.RESET_ALL)
-			elif was_deleted[0] is False and was_deleted[1] == 'y':
-				print('You need to pay before cancel!\n')
-				self.client_config.payment(self.client)
-				was_deleted = self.schedule.delete_appointment(self.client.id, was_deleted[2])
-				print(Fore.YELLOW + f' => Court: {self.schedule.marked["court"]} | Day: {self.schedule.marked["day"]} | Time: {self.schedule.marked["time"]} - Canceled!')
-				print(Style.RESET_ALL)
-			else:
-				print(Fore.RED + f' => Court: {self.schedule.marked["court"]} | Day: {self.schedule.marked["day"]} | Time: {self.schedule.marked["time"]} - Appointment from different user!')
-				print(Style.RESET_ALL)
+			print(Fore.YELLOW + f' => Court: {self.schedule.marked["court"]} | Day: {self.schedule.marked["day"]} | Time: {self.schedule.marked["time"]} - Canceled!')
+			print(Style.RESET_ALL)
 		else:
 			self.__see_client()
 			print(Fore.RED + f' => Court: {self.schedule.marked["court"]} | Day: {self.schedule.marked["day"]} | Time: {self.schedule.marked["time"]} - Not Reserved!')
@@ -119,11 +109,6 @@ class Context:
 		self.__see_client()
 		value = self.client_config.get_client_debit(self.client)
 		print(f'Total = {value}')
-
-	def make_payment(self):
-		self.__load_requirements()
-		self.__see_client()
-		self.client_config.payment(self.client)
 
 	def output_schedule_csv(self):
 		print('Extracting schedule...')

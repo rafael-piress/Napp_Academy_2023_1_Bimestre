@@ -1,8 +1,6 @@
 from libs.storage.DB import DBStructure
 from libs.app.model.client import Client
 from colorama import Style, Fore
-from datetime import datetime
-from datetime import date
 import pandas as pd
 
 
@@ -83,7 +81,7 @@ class ModelingSchedule:
 			control = self.final_schedule[marked['court']]
 		except KeyError:
 			self.extract_final_schedule()
-			self.check_court_viability(marked)
+			self.check_court_viability(court)
 		try:
 			if len(marked['time']) == 3:
 				not_availiable = list()
@@ -185,13 +183,13 @@ class ModelingSchedule:
 					return occurrence[0]
 				else:
 					control = list()
-			return None
 
 	def post_appointment(self) -> None:
 		if self.marked and self.appointment:
 			for element in self.marked.keys():
 				if element.lower() == 'time' and type(self.marked[element]) == list:
 					for occurrence in self.marked[element]:
+						print(occurrence)
 						self.all_times.append(self.__extract_object_key(occurrence, True))
 				self.__extract_object_key(self.marked[element])
 		sended_post = dict()
@@ -246,10 +244,7 @@ class ModelingSchedule:
 			raise ValueError('The client schedule was not uploaded!')
 
 
-	def delete_appointment(self, client_id: int, force: int or None = None) -> None:
-		if force:
-			self.db.db_delete('sports_key_value_occurrences', {'key': 'occurrences_id', 'key_value': force})
-			return [True, 'n']
+	def delete_appointment(self) -> None:
 		if self.marked and self.appointment:
 			for element in self.marked.keys():
 				self.__extract_object_key(self.marked[element])
@@ -257,31 +252,7 @@ class ModelingSchedule:
 			sended_post = dict()
 			delete_id = self.__extract_occurrence_sport_id()
 			if delete_id:
-				if date.weekday(date.today()) != (self.__extract_object_key(self.marked['day'], True)[0] - 1):
-					self.db.db_delete('sports_key_value_occurrences', {'key': 'occurrences_id', 'key_value': delete_id})
-					self.filters = dict()
-					self.filters['client_id'] = client_id
-					self.db.db_read('client_values', self.filters)
-					try:
-						final_value = int(self.db.results[0][-1]) - 100
-						if final_value < 0:
-							self.db.db_delete('client_values', {'key': 'client_id', 'key_value': client_id})
-						else:
-							self.db.db_update('client_values', {'update': 'value', 'value': final_value, 'key': 'client_id', 'key_value': client_id})
-					except IndexError:
-						pass
-					return [True, 'n']
-				else:
-					final_time = int(self.marked['time'].split(' - ')[0].replace('hs', ''))
-					now = datetime.time(datetime.now()).hour
-					if final_time - now > 3: # Change not to 10h
-						self.db.db_delete('sports_key_value_occurrences', {'key': 'occurrences_id', 'key_value': delete_id})
-						return [True, 'n']
-					else:
-						return [False, 'y', delete_id]
-
-			else:
-				return [False, 'n']
+				self.db.db_delete('sports_key_value_occurrences', {'key': 'occurrences_id', 'key_value': delete_id})
 		else:
 			raise ValueError('The client schedule was not uploaded!')
 
